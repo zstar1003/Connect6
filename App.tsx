@@ -7,7 +7,8 @@ import {
   GameMode,
   GameStatus,
   BoardState,
-  Coordinate
+  Coordinate,
+  AIDifficulty
 } from './types';
 import { getKey, isValidMove, checkWin } from './utils/gameLogic';
 import { getBestMove } from './utils/ai';
@@ -36,6 +37,7 @@ const App: React.FC = () => {
 
   // Lock for AI turn
   const [isAITurn, setIsAITurn] = useState(false);
+  const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>(AIDifficulty.Hard);
 
   // Ref to always get latest board in AI effect
   const boardRef = useRef<BoardState>(board);
@@ -114,7 +116,7 @@ const App: React.FC = () => {
                 let currentBoard = new Map(boardRef.current);
 
                 for (let i = 0; i < stonesToPlace; i++) {
-                    const aiMove = getBestMove(currentBoard, Player.White);
+                    const aiMove = getBestMove(currentBoard, Player.White, aiDifficulty);
                     if (aiMove && aiMove.row >= 0 && aiMove.col >= 0) {
                         const key = getKey(aiMove.row, aiMove.col);
                         currentBoard.set(key, Player.White);
@@ -238,8 +240,9 @@ const App: React.FC = () => {
     resetGame();
   };
 
-  const startAIGame = () => {
+  const startAIGame = (difficulty: AIDifficulty) => {
     setGameMode(GameMode.AI);
+    setAiDifficulty(difficulty);
     resetGame();
     setLocalPlayerRole(Player.Black);
   }

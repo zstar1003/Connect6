@@ -19,6 +19,12 @@ export enum GameStatus {
   Ended = 'ended',
 }
 
+export enum AIDifficulty {
+  Easy = 'easy',
+  Medium = 'medium',
+  Hard = 'hard',
+}
+
 export interface Coordinate {
   row: number;
   col: number;

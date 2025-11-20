@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { GameMode, Player, GameStatus } from '../types';
+import { GameMode, Player, GameStatus, AIDifficulty } from '../types';
 import { WIN_COUNT } from '../constants';
 
 interface MenuProps {
@@ -13,7 +13,7 @@ interface MenuProps {
   stonesPlacedThisTurn: number; // For Connect-6 rule
   isFirstMove: boolean; // For Connect-6 rule
   onStartLocal: () => void;
-  onStartAI: () => void;
+  onStartAI: (difficulty: AIDifficulty) => void;
   onHost: () => void;
   onJoin: (id: string) => void;
   onRestart: () => void;
@@ -36,7 +36,7 @@ export const Menu: React.FC<MenuProps> = ({
   onRestart,
   onLeave,
 }) => {
-  const [menuView, setMenuView] = useState<'main' | 'lobby'>('main');
+  const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
   const [joinId, setJoinId] = useState('');
   const [copied, setCopied] = useState(false);
 
@@ -64,7 +64,7 @@ export const Menu: React.FC<MenuProps> = ({
           {menuView === 'main' && (
             <div className="space-y-4 animate-in slide-in-from-left duration-300">
               <button
-                onClick={onStartAI}
+                onClick={() => setMenuView('difficulty')}
                 className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
               >
                 Play vs Computer
@@ -177,6 +177,72 @@ export const Menu: React.FC<MenuProps> = ({
                     </button>
                   </div>
                </div>
+            </div>
+          )}
+
+          {/* Difficulty Selection View */}
+          {menuView === 'difficulty' && (
+            <div className="animate-in slide-in-from-right duration-300">
+              <div className="flex items-center justify-between mb-6">
+                <button onClick={() => setMenuView('main')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
+                  ← Back
+                </button>
+              </div>
+
+              <div className="text-stone-300 text-center mb-6">
+                <h3 className="text-xl font-bold text-amber-200 mb-2">Select Difficulty</h3>
+                <p className="text-sm text-stone-400">Choose your challenge level</p>
+              </div>
+
+              <div className="space-y-3">
+                {/* Easy */}
+                <button
+                  onClick={() => {
+                    onStartAI(AIDifficulty.Easy);
+                  }}
+                  className="w-full py-4 px-6 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 text-white rounded-lg transition shadow-lg transform hover:scale-[1.02] text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-lg">Easy</div>
+                      <div className="text-xs text-green-100 opacity-80">Casual play, makes mistakes</div>
+                    </div>
+                    <div className="text-3xl">😊</div>
+                  </div>
+                </button>
+
+                {/* Medium */}
+                <button
+                  onClick={() => {
+                    onStartAI(AIDifficulty.Medium);
+                  }}
+                  className="w-full py-4 px-6 bg-gradient-to-r from-yellow-600 to-yellow-700 hover:from-yellow-500 hover:to-yellow-600 text-white rounded-lg transition shadow-lg transform hover:scale-[1.02] text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-lg">Medium</div>
+                      <div className="text-xs text-yellow-100 opacity-80">Balanced strategy, good for practice</div>
+                    </div>
+                    <div className="text-3xl">🤔</div>
+                  </div>
+                </button>
+
+                {/* Hard */}
+                <button
+                  onClick={() => {
+                    onStartAI(AIDifficulty.Hard);
+                  }}
+                  className="w-full py-4 px-6 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white rounded-lg transition shadow-lg transform hover:scale-[1.02] text-left"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-bold text-lg">Hard</div>
+                      <div className="text-xs text-red-100 opacity-80">Expert AI, no mercy!</div>
+                    </div>
+                    <div className="text-3xl">😈</div>
+                  </div>
+                </button>
+              </div>
             </div>
           )}
         </div>

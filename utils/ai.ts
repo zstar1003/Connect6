@@ -1,5 +1,5 @@
 import { BOARD_SIZE, WIN_COUNT } from '../constants';
-import { BoardState, Player, Coordinate } from '../types';
+import { BoardState, Player, Coordinate, AIDifficulty } from '../types';
 import { getKey } from './gameLogic';
 
 /**
@@ -209,23 +209,37 @@ const evaluatePosition = (board: BoardState, row: number, col: number, player: P
   return finalScore;
 };
 
-export const getBestMove = (board: BoardState, aiPlayer: Player): Coordinate => {
+export const getBestMove = (board: BoardState, aiPlayer: Player, difficulty: AIDifficulty = AIDifficulty.Hard): Coordinate => {
   try {
     const candidates = getCandidateMoves(board);
-    
+
     if (candidates.length === 0) {
         // Board is full?
-        return { row: -1, col: -1 }; 
+        return { row: -1, col: -1 };
+    }
+
+    // Easy mode: random move with slight preference for better positions
+    if (difficulty === AIDifficulty.Easy) {
+      // 70% chance of random move, 30% chance of smart move
+      if (Math.random() < 0.7) {
+        return candidates[Math.floor(Math.random() * candidates.length)];
+      }
     }
 
     const opponent = aiPlayer === Player.Black ? Player.White : Player.Black;
-    
+
     let bestScore = -1;
     let bestMoves: Coordinate[] = [];
 
     for (const move of candidates) {
-      const score = evaluatePosition(board, move.row, move.col, aiPlayer, opponent);
-      
+      let score = evaluatePosition(board, move.row, move.col, aiPlayer, opponent);
+
+      // Medium mode: reduce look-ahead accuracy by adding randomness
+      if (difficulty === AIDifficulty.Medium) {
+        // Add 20% random variance to scores
+        score = score * (0.9 + Math.random() * 0.2);
+      }
+
       if (score > bestScore) {
         bestScore = score;
         bestMoves = [move];
@@ -237,7 +251,7 @@ export const getBestMove = (board: BoardState, aiPlayer: Player): Coordinate => 
     if (bestMoves.length > 0) {
       return bestMoves[Math.floor(Math.random() * bestMoves.length)];
     }
-    
+
     return candidates[0];
 
   } catch (e) {
