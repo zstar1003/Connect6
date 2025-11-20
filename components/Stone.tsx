@@ -13,10 +13,10 @@ interface StoneProps {
 
 export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGhost }) => {
   const color = player === Player.Black ? COLOR_BLACK_STONE : COLOR_WHITE_STONE;
-  
+
   // Real stones are flattened spheres (oblate spheroids/lenticular).
   // We increase the base radius to fill the cell nicely, then flatten the Y axis.
-  const FLATTEN_RATIO = 0.42; 
+  const FLATTEN_RATIO = 0.42;
   const RADIUS = CELL_SIZE * 0.48;
 
   const { scale, y } = useSpring({
@@ -24,6 +24,18 @@ export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGh
     to: { scale: 1, y: position[1] },
     config: { mass: 1, tension: 280, friction: 60 },
     immediate: isGhost
+  });
+
+  // Pulsing glow animation for last move indicator
+  const { glowScale, glowOpacity } = useSpring({
+    from: { glowScale: 1.2, glowOpacity: 0.4 },
+    to: async (next) => {
+      while (isLastMove && !isGhost) {
+        await next({ glowScale: 1.35, glowOpacity: 0.6 });
+        await next({ glowScale: 1.2, glowOpacity: 0.3 });
+      }
+    },
+    config: { duration: 1500 },
   });
 
   const material = useMemo(() => {
@@ -44,11 +56,6 @@ export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGh
       reflectivity: 0.5,
     });
   }, [player, isGhost, color]);
-
-  // Calculate height offset for the marker based on flattened geometry
-  // Center Y is at position[1] (0.2), Height radius is RADIUS * FLATTEN_RATIO (~0.2)
-  // Top of stone is ~0.4. Marker at 0.45 sits just above.
-  const markerY = CELL_SIZE * 0.45;
 
   return (
     <group position={[position[0], 0, position[2]]}>
@@ -75,12 +82,36 @@ export const Stone: React.FC<StoneProps> = ({ position, player, isLastMove, isGh
         </animated.mesh>
       )}
       
-      {/* Last Move Indicator */}
+      {/* Last Move Indicator - Glowing Effect */}
       {isLastMove && !isGhost && (
-        <mesh position={[0, markerY, 0]}>
-          <ringGeometry args={[0.1, 0.15, 32]} />
-          <meshBasicMaterial color="#ef4444" side={THREE.DoubleSide} transparent opacity={0.9} />
-        </mesh>
+        <>
+          {/* Outer Glow - Larger transparent sphere with pulse */}
+          <animated.mesh
+            position={[0, position[1], 0]}
+            scale={glowScale.to(s => [s, s * FLATTEN_RATIO, s])}
+          >
+            <sphereGeometry args={[RADIUS, 32, 24]} />
+            <animated.meshBasicMaterial
+              color="#60a5fa"
+              transparent
+              opacity={glowOpacity.to(o => o * 0.5)}
+              side={THREE.BackSide}
+            />
+          </animated.mesh>
+
+          {/* Inner Glow - Medium transparent sphere */}
+          <animated.mesh
+            position={[0, position[1], 0]}
+            scale={glowScale.to(s => [(s + 1) / 2, ((s + 1) / 2) * FLATTEN_RATIO, (s + 1) / 2])}
+          >
+            <sphereGeometry args={[RADIUS, 32, 24]} />
+            <animated.meshBasicMaterial
+              color="#3b82f6"
+              transparent
+              opacity={glowOpacity}
+            />
+          </animated.mesh>
+        </>
       )}
     </group>
   );
