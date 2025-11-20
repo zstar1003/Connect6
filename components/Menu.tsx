@@ -50,15 +50,19 @@ export const Menu: React.FC<MenuProps> = ({
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
         <div className="bg-stone-900 p-8 rounded-2xl border border-stone-700 shadow-2xl max-w-md w-full relative overflow-hidden">
-          
-          {/* Header */}
-          <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 mb-2 text-center">
-            Connect 6 Master
-          </h1>
-          <p className="text-stone-400 text-center mb-6 text-sm">
-            First to connect {WIN_COUNT} stones wins.<br/>
-            <span className="text-amber-400 text-xs">Black places 1 stone first, then each player places 2 stones per turn.</span>
-          </p>
+
+          {/* Header - Only show in main view */}
+          {menuView === 'main' && (
+            <>
+              <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-amber-200 to-amber-600 mb-2 text-center">
+                Connect 6 Master
+              </h1>
+              <p className="text-stone-400 text-center mb-6 text-sm">
+                First to connect {WIN_COUNT} stones wins.<br/>
+                <span className="text-amber-400 text-xs">Black places 1 stone first, then each player places 2 stones per turn.</span>
+              </p>
+            </>
+          )}
 
           {/* Main View */}
           {menuView === 'main' && (
@@ -183,18 +187,18 @@ export const Menu: React.FC<MenuProps> = ({
           {/* Difficulty Selection View */}
           {menuView === 'difficulty' && (
             <div className="animate-in slide-in-from-right duration-300">
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-8">
                 <button onClick={() => setMenuView('main')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
                   ← Back
                 </button>
               </div>
 
-              <div className="text-stone-300 text-center mb-6">
-                <h3 className="text-xl font-bold text-amber-200 mb-2">Select Difficulty</h3>
+              <div className="text-stone-300 text-center mb-8">
+                <h3 className="text-2xl font-bold text-amber-200 mb-2">Select Difficulty</h3>
                 <p className="text-sm text-stone-400">Choose your challenge level</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Easy */}
                 <button
                   onClick={() => {
