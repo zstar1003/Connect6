@@ -2,17 +2,36 @@ import { BOARD_SIZE, WIN_COUNT } from '../constants';
 import { BoardState, Player, Coordinate } from '../types';
 import { getKey } from './gameLogic';
 
-// Heuristic weights
+/**
+ * Enhanced AI for Connect-6 Game
+ *
+ * Strategy improvements:
+ * 1. More precise evaluation of open/half-open/closed patterns
+ * 2. Higher priority for blocking opponent's winning moves
+ * 3. Center position bonus for strategic control
+ * 4. Balanced attack/defense weighting (1.2:1.5 ratio)
+ * 5. Pattern recognition for 2-5 consecutive stones
+ *
+ * The AI uses a heuristic evaluation function to score potential moves
+ * without requiring external APIs or machine learning models.
+ */
+
+// Enhanced heuristic weights for Connect-6
 const SCORES = {
-  WIN: 100000000,
-  OPEN_5: 1000000,
-  CLOSED_5: 50000,
-  OPEN_4: 50000,
-  CLOSED_4: 5000,
-  OPEN_3: 5000,
-  CLOSED_3: 500,
-  OPEN_2: 200,
-  CLOSED_2: 50,
+  WIN: 100000000,           // Immediate win
+  BLOCK_WIN: 50000000,      // Block opponent's win
+  OPEN_5: 10000000,         // 5 in a row with open ends
+  CLOSED_5: 1000000,        // 5 in a row with one blocked end
+  OPEN_4: 500000,           // 4 in a row with open ends (very dangerous)
+  HALF_OPEN_4: 100000,      // 4 in a row with one open end
+  CLOSED_4: 10000,          // 4 in a row with blocked ends
+  OPEN_3: 50000,            // 3 in a row with open ends
+  HALF_OPEN_3: 5000,        // 3 in a row with one open end
+  CLOSED_3: 1000,           // 3 in a row with blocked ends
+  OPEN_2: 500,              // 2 in a row with open ends
+  HALF_OPEN_2: 100,         // 2 in a row with one open end
+  CLOSED_2: 50,             // 2 in a row with blocked ends
+  CENTER_BONUS: 20,         // Bonus for center positions
 };
 
 const DIRECTIONS = [
@@ -76,42 +95,50 @@ const getCandidateMoves = (board: BoardState): Coordinate[] => {
 
 const evaluateLine = (board: BoardState, r: number, c: number, dr: number, dc: number, player: Player): number => {
   let count = 0;
-  let openEnds = 0;
-  
+  let frontOpen = false;
+  let backOpen = false;
+
   // Check backwards
   let i = 1;
   while (true) {
     const tr = r - dr * i;
     const tc = c - dc * i;
-    if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) break;
+    if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) {
+      backOpen = false; // Hit board edge
+      break;
+    }
 
     const val = board.get(getKey(tr, tc));
     if (val === player) {
       count++;
     } else if (val === undefined) {
-      openEnds++;
+      backOpen = true; // Empty space behind
       break;
     } else {
-      // Opponent blocked
+      backOpen = false; // Opponent blocked
       break;
     }
     i++;
   }
-  
+
   // Check forwards
   let j = 1;
   while (true) {
     const tr = r + dr * j;
     const tc = c + dc * j;
-    if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) break;
+    if (tr < 0 || tr >= BOARD_SIZE || tc < 0 || tc >= BOARD_SIZE) {
+      frontOpen = false; // Hit board edge
+      break;
+    }
 
     const val = board.get(getKey(tr, tc));
     if (val === player) {
       count++;
     } else if (val === undefined) {
-      openEnds++;
+      frontOpen = true; // Empty space in front
       break;
     } else {
+      frontOpen = false; // Opponent blocked
       break;
     }
     j++;
@@ -121,13 +148,31 @@ const evaluateLine = (board: BoardState, r: number, c: number, dr: number, dc: n
   const totalLen = count + 1;
 
   if (totalLen >= WIN_COUNT) return SCORES.WIN;
-  
-  // Adjust scores for Connect 6
-  if (totalLen === 5) return openEnds > 0 ? (openEnds > 1 ? SCORES.OPEN_5 : SCORES.CLOSED_5) : 0;
-  if (totalLen === 4) return openEnds > 0 ? (openEnds > 1 ? SCORES.OPEN_4 : SCORES.CLOSED_4) : 0;
-  if (totalLen === 3) return openEnds > 0 ? (openEnds > 1 ? SCORES.OPEN_3 : SCORES.CLOSED_3) : 0;
-  if (totalLen === 2) return openEnds > 0 ? (openEnds > 1 ? SCORES.OPEN_2 : SCORES.CLOSED_2) : 0;
-  
+
+  // Categorize based on open ends
+  const openEnds = (frontOpen ? 1 : 0) + (backOpen ? 1 : 0);
+
+  if (totalLen === 5) {
+    if (openEnds === 2) return SCORES.OPEN_5;
+    if (openEnds === 1) return SCORES.CLOSED_5;
+    return 0;
+  }
+  if (totalLen === 4) {
+    if (openEnds === 2) return SCORES.OPEN_4;
+    if (openEnds === 1) return SCORES.HALF_OPEN_4;
+    if (openEnds === 0) return SCORES.CLOSED_4;
+  }
+  if (totalLen === 3) {
+    if (openEnds === 2) return SCORES.OPEN_3;
+    if (openEnds === 1) return SCORES.HALF_OPEN_3;
+    if (openEnds === 0) return SCORES.CLOSED_3;
+  }
+  if (totalLen === 2) {
+    if (openEnds === 2) return SCORES.OPEN_2;
+    if (openEnds === 1) return SCORES.HALF_OPEN_2;
+    if (openEnds === 0) return SCORES.CLOSED_2;
+  }
+
   return 1; // Base value for adjacency
 };
 
@@ -135,18 +180,33 @@ const evaluatePosition = (board: BoardState, row: number, col: number, player: P
   let attackScore = 0;
   let defenseScore = 0;
 
+  // Evaluate attack potential in all directions
   for (const { dr, dc } of DIRECTIONS) {
     attackScore += evaluateLine(board, row, col, dr, dc, player);
   }
 
+  // Evaluate defense necessity in all directions
   for (const { dr, dc } of DIRECTIONS) {
-    defenseScore += evaluateLine(board, row, col, dr, dc, opponent);
+    const lineScore = evaluateLine(board, row, col, dr, dc, opponent);
+    defenseScore += lineScore;
+
+    // CRITICAL: If opponent can win next turn, prioritize blocking
+    if (lineScore >= SCORES.OPEN_5 || lineScore >= SCORES.CLOSED_5) {
+      defenseScore = SCORES.BLOCK_WIN;
+    }
   }
 
-  // Defense is critical if opponent is about to win
-  if (defenseScore >= SCORES.OPEN_5) defenseScore *= 2.0;
-  
-  return attackScore + defenseScore;
+  // Center position bonus - controlling the center is strategically important
+  const centerRow = Math.floor(BOARD_SIZE / 2);
+  const centerCol = Math.floor(BOARD_SIZE / 2);
+  const distanceFromCenter = Math.abs(row - centerRow) + Math.abs(col - centerCol);
+  const centerBonus = SCORES.CENTER_BONUS * (BOARD_SIZE - distanceFromCenter);
+
+  // Defense has higher priority when opponent threatens to win
+  // But attack is valued higher for creating winning opportunities
+  const finalScore = attackScore * 1.2 + defenseScore * 1.5 + centerBonus;
+
+  return finalScore;
 };
 
 export const getBestMove = (board: BoardState, aiPlayer: Player): Coordinate => {

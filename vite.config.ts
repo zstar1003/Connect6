@@ -12,8 +12,6 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [react()],
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         // Explicitly define VITE_ variables for network access
         'import.meta.env.VITE_USE_LAN_SERVER': JSON.stringify(env.VITE_USE_LAN_SERVER),
         'import.meta.env.VITE_PEER_HOST': JSON.stringify(env.VITE_PEER_HOST),

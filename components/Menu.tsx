@@ -58,11 +58,11 @@ export const Menu: React.FC<MenuProps> = ({
           {/* Main View */}
           {menuView === 'main' && (
             <div className="space-y-4 animate-in slide-in-from-left duration-300">
-              <button 
+              <button
                 onClick={onStartAI}
                 className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
               >
-                Play vs CPU
+                Play vs Computer
               </button>
 
               <button 
@@ -198,7 +198,7 @@ export const Menu: React.FC<MenuProps> = ({
           )}
           {gameMode === GameMode.AI && (
              <div className="mt-2 text-xs text-indigo-300">
-                Mode: vs CPU
+                Mode: vs Computer
              </div>
           )}
         </div>

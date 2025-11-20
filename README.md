@@ -54,9 +54,7 @@ npm install
    npm install
    ```
 
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-
-3. Choose your multiplayer mode:
+2. Choose your multiplayer mode:
 
    ### Option A: LAN Multiplayer (Recommended for local network)
 
@@ -89,9 +87,6 @@ npm install
 Create a `.env.local` file (see `.env.example` for reference):
 
 ```bash
-# API Key
-GEMINI_API_KEY=your_api_key_here
-
 # Network Mode
 VITE_USE_LAN_SERVER=true  # true for LAN, false for internet
 
