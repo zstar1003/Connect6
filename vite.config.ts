@@ -6,13 +6,19 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
       server: {
-        port: 3000,
-        host: '0.0.0.0',
+        host: '0.0.0.0', // Listen on all network interfaces
+        port: 5173,
+        strictPort: true,
       },
       plugins: [react()],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        // Explicitly define VITE_ variables for network access
+        'import.meta.env.VITE_USE_LAN_SERVER': JSON.stringify(env.VITE_USE_LAN_SERVER),
+        'import.meta.env.VITE_PEER_HOST': JSON.stringify(env.VITE_PEER_HOST),
+        'import.meta.env.VITE_PEER_PORT': JSON.stringify(env.VITE_PEER_PORT),
+        'import.meta.env.VITE_PEER_PATH': JSON.stringify(env.VITE_PEER_PATH),
       },
       resolve: {
         alias: {

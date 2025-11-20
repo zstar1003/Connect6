@@ -37,9 +37,3 @@ export interface NetworkMessage {
   type: 'move' | 'start' | 'restart' | 'join';
   payload?: any;
 }
-
-export interface RoomInfo {
-  id: string;
-  name: string;
-  status: 'unknown' | 'checking' | 'online' | 'offline';
-}

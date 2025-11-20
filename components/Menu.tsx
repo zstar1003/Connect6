@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { GameMode, Player, GameStatus, RoomInfo } from '../types';
+import { GameMode, Player, GameStatus } from '../types';
 import { WIN_COUNT } from '../constants';
 
 interface MenuProps {
@@ -10,15 +10,12 @@ interface MenuProps {
   localPlayer: Player; // For network games
   winner: Player | null;
   myId: string;
-  rooms: RoomInfo[];
   onStartLocal: () => void;
   onStartAI: () => void;
   onHost: () => void;
   onJoin: (id: string) => void;
   onRestart: () => void;
   onLeave: () => void;
-  onScanRooms: () => void;
-  onHostPublic: (roomId: string) => void;
 }
 
 export const Menu: React.FC<MenuProps> = ({
@@ -28,26 +25,16 @@ export const Menu: React.FC<MenuProps> = ({
   localPlayer,
   winner,
   myId,
-  rooms,
   onStartLocal,
   onStartAI,
   onHost,
   onJoin,
   onRestart,
   onLeave,
-  onScanRooms,
-  onHostPublic
 }) => {
   const [menuView, setMenuView] = useState<'main' | 'lobby'>('main');
   const [joinId, setJoinId] = useState('');
   const [copied, setCopied] = useState(false);
-
-  // Auto-scan when entering lobby
-  useEffect(() => {
-      if (menuView === 'lobby') {
-          onScanRooms();
-      }
-  }, [menuView]);
 
   const copyId = () => {
     navigator.clipboard.writeText(myId);
@@ -102,77 +89,87 @@ export const Menu: React.FC<MenuProps> = ({
 
           {/* Lobby View */}
           {menuView === 'lobby' && (
-            <div className="animate-in slide-in-from-right duration-300 h-[400px] flex flex-col">
-               <div className="flex items-center justify-between mb-4">
+            <div className="animate-in slide-in-from-right duration-300">
+               <div className="flex items-center justify-between mb-6">
                    <button onClick={() => setMenuView('main')} className="text-stone-400 hover:text-white text-sm flex items-center gap-1">
                      ← Back
                    </button>
-                   <button onClick={onScanRooms} className="text-amber-500 hover:text-amber-400 text-sm flex items-center gap-1">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
-                     Refresh
-                   </button>
                </div>
 
-               <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                  <div className="text-xs text-stone-500 font-semibold uppercase mb-2 sticky top-0 bg-stone-900 py-1">Public Rooms</div>
-                  {rooms.map((room) => (
-                      <div key={room.id} className="bg-stone-950/50 border border-stone-800 rounded-lg p-3 flex items-center justify-between hover:border-stone-700 transition">
-                          <div className="flex flex-col">
-                              <span className="text-stone-300 font-medium text-sm">{room.name}</span>
-                              <div className="flex items-center gap-1.5 mt-1">
-                                  <div className={`w-2 h-2 rounded-full ${
-                                      room.status === 'online' ? 'bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)]' : 
-                                      room.status === 'checking' ? 'bg-yellow-500 animate-pulse' : 
-                                      room.status === 'unknown' ? 'bg-stone-600' :
-                                      'bg-stone-700'
-                                  }`}></div>
-                                  <span className="text-[10px] text-stone-500 uppercase tracking-wide">
-                                      {room.status === 'online' ? 'Online' : 
-                                       room.status === 'checking' ? 'Scanning...' : 
-                                       room.status === 'unknown' ? 'Wait' : 'Empty'}
-                                  </span>
-                              </div>
-                          </div>
-                          <div>
-                              {room.status === 'online' ? (
-                                  <button 
-                                    onClick={() => onJoin(room.id)}
-                                    className="px-3 py-1.5 bg-green-900/30 hover:bg-green-900/50 text-green-400 text-xs font-bold rounded border border-green-800/50 transition"
-                                  >
-                                    JOIN
-                                  </button>
-                              ) : room.status === 'offline' ? (
-                                  <button 
-                                    onClick={() => onHostPublic(room.id)}
-                                    className="px-3 py-1.5 bg-stone-800 hover:bg-amber-900/30 text-stone-400 hover:text-amber-500 text-xs font-bold rounded border border-stone-700 hover:border-amber-800/50 transition"
-                                  >
-                                    HOST
-                                  </button>
-                              ) : (
-                                  <span className="px-3 py-1.5 text-stone-600 text-xs font-bold">...</span>
-                              )}
-                          </div>
+               {/* Host Section */}
+               <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 mb-5 shadow-lg">
+                  <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Host a Room
+                  </div>
+
+                  {myId ? (
+                    <>
+                      <div className="text-stone-400 text-sm mb-3">
+                        Share this Room ID with others to let them join:
                       </div>
-                  ))}
+                      <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
+                        <code className="flex-1 text-amber-300 font-mono text-sm select-all break-all">
+                          {myId}
+                        </code>
+                        <button
+                          onClick={copyId}
+                          className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold text-stone-300 border border-stone-700 transition whitespace-nowrap"
+                        >
+                          {copied ? '✓ Copied' : 'Copy'}
+                        </button>
+                      </div>
+                      <div className="mt-3 text-xs text-stone-500 flex items-start gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+                        <span>Waiting for another player to join...</span>
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      onClick={onHost}
+                      className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
+                    >
+                      Create Room
+                    </button>
+                  )}
                </div>
 
-               <div className="mt-4 pt-4 border-t border-stone-800">
-                  <div className="text-xs text-stone-500 font-semibold uppercase mb-2">Private Game</div>
+               {/* Divider */}
+               <div className="relative py-3">
+                 <div className="absolute inset-0 flex items-center">
+                   <span className="w-full border-t border-stone-700"></span>
+                 </div>
+                 <div className="relative flex justify-center text-xs uppercase">
+                   <span className="bg-stone-900 px-3 text-stone-500">or</span>
+                 </div>
+               </div>
+
+               {/* Join Section */}
+               <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 shadow-lg">
+                  <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                    Join a Room
+                  </div>
+
+                  <div className="text-stone-400 text-sm mb-3">
+                    Enter the host's Room ID to join their game:
+                  </div>
+
                   <div className="flex gap-2">
-                      <button onClick={onHost} className="flex-1 py-2 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold text-stone-300 border border-stone-700">
-                          Host Private
-                      </button>
-                      <div className="flex-[1.5] flex gap-1">
-                          <input 
-                            placeholder="ID..." 
-                            className="w-full bg-stone-950 border border-stone-700 rounded px-2 text-xs text-stone-300 focus:border-amber-500 focus:outline-none"
-                            value={joinId}
-                            onChange={(e) => setJoinId(e.target.value)}
-                          />
-                          <button onClick={() => onJoin(joinId)} disabled={!joinId} className="px-3 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold text-stone-300 border border-stone-700 disabled:opacity-50">
-                              Join
-                          </button>
-                      </div>
+                    <input
+                      placeholder="Paste Room ID here..."
+                      className="flex-1 bg-black/50 border border-stone-700 rounded-lg px-4 py-2.5 text-sm text-stone-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                      value={joinId}
+                      onChange={(e) => setJoinId(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && joinId && onJoin(joinId)}
+                    />
+                    <button
+                      onClick={() => onJoin(joinId)}
+                      disabled={!joinId}
+                      className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 disabled:from-stone-800 disabled:to-stone-800 rounded-lg text-sm font-bold text-white disabled:text-stone-600 border border-green-800 disabled:border-stone-700 transition disabled:cursor-not-allowed"
+                    >
+                      Join
+                    </button>
                   </div>
                </div>
             </div>

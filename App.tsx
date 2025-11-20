@@ -1,22 +1,17 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Scene } from './components/Scene';
 import { Menu } from './components/Menu';
-import { 
-  Player, 
-  GameMode, 
-  GameStatus, 
-  BoardState, 
-  Coordinate,
-  RoomInfo
+import { DebugLogger } from './components/DebugLogger';
+import {
+  Player,
+  GameMode,
+  GameStatus,
+  BoardState,
+  Coordinate
 } from './types';
 import { getKey, isValidMove, checkWin } from './utils/gameLogic';
 import { getBestMove } from './utils/ai';
 import { PeerService } from './services/PeerService';
-
-// Predefined room IDs for the lobby
-const PUBLIC_ROOM_COUNT = 5;
-const BASE_ROOM_ID = 'connect6-3d-public-room-';
 
 const App: React.FC = () => {
   // Game State
@@ -32,27 +27,11 @@ const App: React.FC = () => {
 
   // Network State
   const [myId, setMyId] = useState<string>('');
-  const [localPlayerRole, setLocalPlayerRole] = useState<Player>(Player.Black); 
+  const [localPlayerRole, setLocalPlayerRole] = useState<Player>(Player.Black);
   const peerService = useRef<PeerService | null>(null);
 
-  // Lobby State
-  const [rooms, setRooms] = useState<RoomInfo[]>([]);
-  
   // Lock for AI turn
   const [isAITurn, setIsAITurn] = useState(false);
-
-  // Initialize Room List
-  useEffect(() => {
-      const initialRooms: RoomInfo[] = [];
-      for (let i = 1; i <= PUBLIC_ROOM_COUNT; i++) {
-          initialRooms.push({
-              id: `${BASE_ROOM_ID}${i}`,
-              name: `Public Room ${i}`,
-              status: 'unknown'
-          });
-      }
-      setRooms(initialRooms);
-  }, []);
 
   // --- Game Logic ---
 
@@ -160,49 +139,46 @@ const App: React.FC = () => {
 
   // --- Network & Lobby Handlers ---
 
-  const initPeerWithLogic = (mode: GameMode, specificId?: string) => {
+  const handleHost = () => {
+      setGameMode(GameMode.OnlineHost);
+
       if (peerService.current) peerService.current.destroy();
 
       peerService.current = new PeerService({
         onOpen: (id) => {
           setMyId(id);
-          if (mode === GameMode.OnlineHost) setLocalPlayerRole(Player.Black);
+          setLocalPlayerRole(Player.Black);
         },
         onData: (data: any) => {
+          console.log('[Host] Received data:', data);
           if (data.type === 'connected') {
-             if (mode === GameMode.OnlineHost) {
-                 resetGame();
-                 peerService.current?.send({ type: 'start' });
-             }
+             console.log('[Host] Client connected, starting game...');
+             resetGame();
+             // Small delay to ensure client's data handler is ready
+             setTimeout(() => {
+               peerService.current?.send({ type: 'start' });
+               console.log('[Host] Sent start message');
+             }, 100);
           }
           else if (data.type === 'move') {
             executeMove(data.payload.row, data.payload.col, data.payload.player);
-          } 
-          else if (data.type === 'start') {
-             setLocalPlayerRole(Player.White);
-             resetGame();
-          } 
+          }
           else if (data.type === 'restart') {
              resetGame();
           }
         },
         onClose: () => {
-           setStatus(GameStatus.Menu); 
+           setStatus(GameStatus.Menu);
+           setMyId('');
         },
         onError: (errStr) => {
-            if (errStr === 'ID_TAKEN') {
-                alert("This Public Room is already occupied by someone else.");
-                scanRooms(); // Refresh status
-            } else if (errStr === 'PEER_NOT_FOUND') {
-                alert("Could not connect to room. The host may have disconnected.");
-                scanRooms();
-            } else {
-                console.warn("Network Error:", errStr);
-            }
+            alert("Network Error: " + errStr);
+            setStatus(GameStatus.Menu);
+            setMyId('');
         }
       });
 
-      peerService.current.init(specificId);
+      peerService.current.init(); // Random ID
   };
 
   const startLocalGame = () => {
@@ -216,39 +192,44 @@ const App: React.FC = () => {
     setLocalPlayerRole(Player.Black);
   }
 
-  const handleHostPrivate = () => {
-      setGameMode(GameMode.OnlineHost);
-      initPeerWithLogic(GameMode.OnlineHost); // Random ID
-  };
-
-  const handleHostPublic = (roomId: string) => {
-      setGameMode(GameMode.OnlineHost);
-      initPeerWithLogic(GameMode.OnlineHost, roomId);
-  };
-
   const handleJoin = (id: string) => {
+      console.log('[Client] ========== JOIN GAME ==========');
+      console.log('[Client] Joining room:', id);
       setGameMode(GameMode.OnlineJoin);
-      
+
       if (peerService.current) peerService.current.destroy();
-      
+
       peerService.current = new PeerService({
           onOpen: (_myId) => {
+              console.log('[Client] My ID:', _myId);
               setMyId(_myId);
+              console.log('[Client] Connecting to host:', id);
               peerService.current?.connect(id);
           },
           onData: (data: any) => {
+             console.log('[Client] <<<< Received data:', data);
              if (data.type === 'start') {
+                 console.log('[Client] ✓ Starting game...');
                  setLocalPlayerRole(Player.White);
                  resetGame();
              } else if (data.type === 'move') {
+                 console.log('[Client] Received move:', data.payload);
                  executeMove(data.payload.row, data.payload.col, data.payload.player);
              } else if (data.type === 'restart') {
+                 console.log('[Client] Restarting game');
                  resetGame();
              }
           },
-          onClose: () => setStatus(GameStatus.Menu),
+          onClose: () => {
+              console.log('[Client] Connection closed');
+              setStatus(GameStatus.Menu);
+              setMyId('');
+          },
           onError: (err) => {
+             console.error('[Client] Error:', err);
              alert(err === 'PEER_NOT_FOUND' ? "Room not found. Host might be offline." : err);
+             setStatus(GameStatus.Menu);
+             setMyId('');
           }
       });
       peerService.current.init();
@@ -266,27 +247,7 @@ const App: React.FC = () => {
       setStatus(GameStatus.Menu);
       setGameMode(GameMode.Local);
       setBoard(new Map());
-  };
-
-  const scanRooms = async () => {
-      // Set all to checking
-      setRooms(prev => prev.map(r => ({...r, status: 'checking'})));
-
-      // Check sequentially to be gentle on the network
-      const newRooms = [...rooms];
-      
-      for (let i = 0; i < newRooms.length; i++) {
-          const room = newRooms[i];
-          try {
-              const status = await PeerService.checkRoomStatus(room.id);
-              newRooms[i] = { ...room, status: status };
-              // Partial update to UI
-              setRooms([...newRooms]);
-          } catch (e) {
-              newRooms[i] = { ...room, status: 'offline' };
-              setRooms([...newRooms]);
-          }
-      }
+      setMyId('');
   };
 
   return (
@@ -302,22 +263,19 @@ const App: React.FC = () => {
         resetCameraTrigger={resetCameraFlag}
       />
       
-      <Menu 
+      <Menu
         status={status}
         gameMode={gameMode}
         currentPlayer={currentPlayer}
         localPlayer={localPlayerRole}
         winner={winner}
         myId={myId}
-        rooms={rooms}
         onStartLocal={startLocalGame}
         onStartAI={startAIGame}
-        onHost={handleHostPrivate}
-        onHostPublic={handleHostPublic}
+        onHost={handleHost}
         onJoin={handleJoin}
         onRestart={handleRestart}
         onLeave={handleLeave}
-        onScanRooms={scanRooms}
       />
 
       {/* Reset View Button */}
@@ -340,6 +298,9 @@ const App: React.FC = () => {
             )}
         </div>
       )}
+
+      {/* Debug Logger - only show in development */}
+      {import.meta.env.DEV && <DebugLogger />}
     </div>
   );
 };
