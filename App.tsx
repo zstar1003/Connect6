@@ -299,8 +299,8 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Debug Logger - only show in development */}
-      {import.meta.env.DEV && <DebugLogger />}
+      {/* Debug Logger - disabled */}
+      {/* {import.meta.env.DEV && <DebugLogger />} */}
     </div>
   );
 };

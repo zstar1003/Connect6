@@ -9,7 +9,7 @@ interface LogEntry {
 
 export const DebugLogger: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false); // 默认隐藏
   const [isMinimized, setIsMinimized] = useState(false);
 
   useEffect(() => {
