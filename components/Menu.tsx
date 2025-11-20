@@ -377,7 +377,88 @@ export const Menu: React.FC<MenuProps> = ({
           </div>
         </div>
       )}
-      
+
+      {/* Game Ended - Control Panel (when dialog is closed) */}
+      {status === GameStatus.EndedDialogClosed && (
+        <div className="absolute inset-x-0 bottom-0 p-6 flex justify-center z-20">
+          <div className="bg-stone-900/95 backdrop-blur-lg rounded-2xl border border-amber-500/30 shadow-2xl p-6 max-w-2xl w-full">
+            {/* Game Result */}
+            <div className="text-center mb-6">
+              <h3 className="text-3xl font-bold text-white mb-2">
+                {winner === Player.Black ? 'Black' : 'White'} Wins!
+              </h3>
+              <p className="text-stone-400 text-sm">Game ended - Ready for next round?</p>
+            </div>
+
+            {/* Online game status */}
+            {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && (
+              <div className="mb-6">
+                {/* Opponent wants to play again */}
+                {restartRequested && (
+                  <div className="bg-amber-900/30 border border-amber-500/50 rounded-lg p-4 mb-3 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+                      <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"/>
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-amber-200 font-semibold">Opponent is ready!</p>
+                      <p className="text-amber-300/70 text-xs">Click "Play Again" to start next round</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Waiting for opponent */}
+                {waitingForOpponent && (
+                  <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-3 flex items-center gap-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+                    <div className="flex-1">
+                      <p className="text-blue-200 font-semibold">Waiting for opponent...</p>
+                      <p className="text-blue-300/70 text-xs">You're ready for next round</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* No action yet */}
+                {!restartRequested && !waitingForOpponent && (
+                  <div className="bg-stone-800/50 border border-stone-700 rounded-lg p-4 mb-3 flex items-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-stone-400">
+                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <div className="flex-1">
+                      <p className="text-stone-300 font-semibold">Opponent is viewing the board</p>
+                      <p className="text-stone-400 text-xs">Waiting for their decision</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={onRestart}
+                className="flex items-center gap-2 py-3 px-8 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-full shadow-lg transition hover:scale-105"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+                {(gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && restartRequested
+                  ? 'Accept & Play Again'
+                  : 'Play Again'}
+              </button>
+              <button
+                onClick={onLeave}
+                className="flex items-center gap-2 py-3 px-8 bg-stone-800 hover:bg-stone-700 text-stone-300 font-bold rounded-full transition"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Main Menu
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Back Button (bottom right) */}
       <div className="absolute bottom-4 right-4 z-10">
           <button 

@@ -17,6 +17,7 @@ export enum GameStatus {
   Menu = 'menu',
   Playing = 'playing',
   Ended = 'ended',
+  EndedDialogClosed = 'ended_dialog_closed', // Game ended but dialog was closed
 }
 
 export enum AIDifficulty {

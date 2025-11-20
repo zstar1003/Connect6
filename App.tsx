@@ -366,8 +366,8 @@ const App: React.FC = () => {
   };
 
   const handleCloseWinDialog = () => {
-      // Just close the dialog, stay in the game
-      setStatus(GameStatus.Playing);
+      // Close the dialog but keep the game in ended state
+      setStatus(GameStatus.EndedDialogClosed);
   };
 
   const handleLeave = () => {
