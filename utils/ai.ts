@@ -160,17 +160,17 @@ const evaluateLine = (board: BoardState, r: number, c: number, dr: number, dc: n
   if (totalLen === 4) {
     if (openEnds === 2) return SCORES.OPEN_4;
     if (openEnds === 1) return SCORES.HALF_OPEN_4;
-    if (openEnds === 0) return SCORES.CLOSED_4;
+    return SCORES.CLOSED_4;  // 添加 return
   }
   if (totalLen === 3) {
     if (openEnds === 2) return SCORES.OPEN_3;
     if (openEnds === 1) return SCORES.HALF_OPEN_3;
-    if (openEnds === 0) return SCORES.CLOSED_3;
+    return SCORES.CLOSED_3;  // 添加 return
   }
   if (totalLen === 2) {
     if (openEnds === 2) return SCORES.OPEN_2;
     if (openEnds === 1) return SCORES.HALF_OPEN_2;
-    if (openEnds === 0) return SCORES.CLOSED_2;
+    return SCORES.CLOSED_2;  // 添加 return
   }
 
   return 1; // Base value for adjacency

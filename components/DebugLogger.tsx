@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface LogEntry {
   id: number;
@@ -9,12 +9,11 @@ interface LogEntry {
 
 export const DebugLogger: React.FC = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [isVisible, setIsVisible] = useState(false); // 默认隐藏
+  const [isVisible, setIsVisible] = useState(true); // 临时设为可见以调试
   const [isMinimized, setIsMinimized] = useState(false);
+  const logIdRef = useRef(0); // 使用 ref 保持 ID 递增
 
   useEffect(() => {
-    let logId = 0;
-
     // Intercept console.log
     const originalLog = console.log;
     const originalError = console.error;
@@ -23,7 +22,7 @@ export const DebugLogger: React.FC = () => {
     const addLog = (message: string, type: 'info' | 'error' | 'success') => {
       const timestamp = new Date().toLocaleTimeString();
       setLogs(prev => {
-        const newLogs = [...prev, { id: logId++, message, type, timestamp }];
+        const newLogs = [...prev, { id: logIdRef.current++, message, type, timestamp }];
         // Keep only last 20 logs
         return newLogs.slice(-20);
       });
