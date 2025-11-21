@@ -1,0 +1,12 @@
+/// <reference types="vite/client" />
+
+interface ImportMetaEnv {
+  readonly VITE_USE_LAN_SERVER: string;
+  readonly VITE_PEER_HOST: string;
+  readonly VITE_PEER_PORT: string;
+  readonly VITE_PEER_PATH: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
