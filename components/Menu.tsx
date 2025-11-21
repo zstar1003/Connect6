@@ -50,13 +50,6 @@ export const Menu: React.FC<MenuProps> = ({
   const { language, setLanguage, t } = useLanguage();
   const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
   const [joinId, setJoinId] = useState('');
-  const [copied, setCopied] = useState(false);
-
-  const copyId = () => {
-    navigator.clipboard.writeText(myId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   // Waiting Room - Host is waiting for players to join
   if (status === GameStatus.WaitingRoom) {
@@ -67,22 +60,6 @@ export const Menu: React.FC<MenuProps> = ({
           <p className="text-stone-400 text-center mb-6 text-sm">
             {t.shareRoomId}
           </p>
-
-          {/* Room ID Display */}
-          <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 mb-6">
-            <div className="text-xs text-stone-500 font-semibold uppercase mb-3">{t.yourRoomId}</div>
-            <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
-              <code className="flex-1 text-amber-300 font-mono text-lg select-all break-all text-center">
-                {myId}
-              </code>
-            </div>
-            <button
-              onClick={copyId}
-              className="w-full mt-3 py-2 px-4 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm font-bold text-stone-300 border border-stone-700 transition"
-            >
-              {copied ? t.copiedToClipboard : t.copyRoomId}
-            </button>
-          </div>
 
           {/* Waiting Animation */}
           <div className="flex flex-col items-center gap-4 mb-6">
@@ -222,20 +199,6 @@ export const Menu: React.FC<MenuProps> = ({
 
                   {myId && gameMode === GameMode.OnlineHost ? (
                     <>
-                      <div className="text-stone-400 text-sm mb-3">
-                        {t.shareRoomId}
-                      </div>
-                      <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
-                        <code className="flex-1 text-amber-300 font-mono text-sm select-all break-all">
-                          {myId}
-                        </code>
-                        <button
-                          onClick={copyId}
-                          className="px-3 py-1.5 bg-stone-800 hover:bg-stone-700 rounded text-xs font-bold text-stone-300 border border-stone-700 transition whitespace-nowrap"
-                        >
-                          {copied ? t.copied : t.copy}
-                        </button>
-                      </div>
                       <div className="mt-3 text-xs text-stone-500 flex items-start gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 flex-shrink-0"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
                         <span>{t.waitingForOpponent}</span>
@@ -417,18 +380,6 @@ export const Menu: React.FC<MenuProps> = ({
              </div>
           )}
         </div>
-
-        {gameMode !== GameMode.Local && gameMode !== GameMode.AI && (
-           <div className="bg-black/50 backdrop-blur-md rounded-lg p-3 text-white border border-white/10 pointer-events-auto flex flex-col items-end">
-             <div className="text-xs text-stone-400 mb-1">{t.roomId}</div>
-             <div className="flex items-center gap-2">
-               <code className="bg-black/50 px-2 py-1 rounded text-amber-200 select-all max-w-[150px] truncate">{myId}</code>
-               <button onClick={copyId} className="text-xs hover:text-white text-stone-400">
-                 {copied ? t.copied + '!' : t.copy}
-               </button>
-             </div>
-           </div>
-        )}
       </div>
 
       {/* Game Over Modal */}
