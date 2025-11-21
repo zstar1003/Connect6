@@ -28,6 +28,7 @@ const App: React.FC = () => {
   const [winner, setWinner] = useState<Player | null>(null);
   const [winningLine, setWinningLine] = useState<Coordinate[] | null>(null);
   const [lastMove, setLastMove] = useState<Coordinate | null>(null);
+  const [lastMoves, setLastMoves] = useState<Coordinate[]>([]); // Track all stones placed in current turn
   const [hoverPos, setHoverPos] = useState<Coordinate | null>(null);
   const [resetCameraFlag, setResetCameraFlag] = useState(0);
 
@@ -86,6 +87,7 @@ const App: React.FC = () => {
     setWinner(null);
     setWinningLine(null);
     setLastMove(null);
+    setLastMoves([]);
     setIsAITurn(false);
     setStonesPlacedThisTurn(0);
     setIsFirstMove(true);
@@ -123,6 +125,11 @@ const App: React.FC = () => {
     const key = getKey(row, col);
     if (board.has(key)) return;
 
+    // If this is the first stone of a new turn, clear previous turn's highlights
+    if (stonesPlacedThisTurn === 0) {
+      setLastMoves([]);
+    }
+
     // Play stone placement sound
     soundManager.playPlaceStone();
 
@@ -134,6 +141,9 @@ const App: React.FC = () => {
 
     const moveCoord = { row, col };
     setLastMove(moveCoord);
+
+    // Add to lastMoves array for this turn
+    setLastMoves(prev => [...prev, moveCoord]);
 
     const tempBoard = new Map<string, Player>(board);
     tempBoard.set(key, player);
@@ -155,6 +165,7 @@ const App: React.FC = () => {
       setCurrentPlayer(nextPlayer);
       setStonesPlacedThisTurn(0);
       setIsFirstMove(false);
+      // lastMoves will be cleared when next player places first stone
     } else {
       // Same player continues
       setStonesPlacedThisTurn(newStonesPlaced);
@@ -168,9 +179,13 @@ const App: React.FC = () => {
 
         const timer = setTimeout(() => {
             try {
+                // Clear previous turn's highlights before AI starts
+                setLastMoves([]);
+
                 // Determine how many stones AI needs to place
                 const stonesToPlace = isFirstMove ? 1 : 2;
                 let currentBoard = new Map(boardRef.current);
+                const aiMoves: Coordinate[] = [];
 
                 for (let i = 0; i < stonesToPlace; i++) {
                     const aiMove = getBestMove(currentBoard, Player.White, aiDifficulty);
@@ -178,18 +193,28 @@ const App: React.FC = () => {
                         const key = getKey(aiMove.row, aiMove.col);
                         currentBoard.set(key, Player.White);
 
+                        // Play sound for each stone
+                        soundManager.playPlaceStone();
+
                         setBoard(new Map(currentBoard));
                         setLastMove({ row: aiMove.row, col: aiMove.col });
+
+                        // Add to AI's moves for this turn
+                        aiMoves.push({ row: aiMove.row, col: aiMove.col });
 
                         // Check for win
                         const winLine = checkWin(currentBoard, { row: aiMove.row, col: aiMove.col }, Player.White);
                         if (winLine) {
+                            setLastMoves(aiMoves); // Set highlights before winning
                             handleWin(Player.White, winLine);
                             setIsAITurn(false);
                             return;
                         }
                     }
                 }
+
+                // Update lastMoves with all AI moves
+                setLastMoves(aiMoves);
 
                 // Update boardRef for next turn
                 boardRef.current = currentBoard;
@@ -454,11 +479,12 @@ const App: React.FC = () => {
 
   return (
     <div className="relative w-full h-full bg-stone-900">
-      <Scene 
+      <Scene
         board={board}
         hoverPos={hoverPos}
         currentPlayer={currentPlayer}
         lastMove={lastMove}
+        lastMoves={lastMoves}
         onCellClick={onCellClick}
         onCellHover={onCellHover}
         winningLine={winningLine}

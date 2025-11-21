@@ -11,6 +11,7 @@ interface SceneProps {
   hoverPos: Coordinate | null;
   currentPlayer: Player;
   lastMove: Coordinate | null;
+  lastMoves: Coordinate[]; // All stones placed in current turn
   onCellClick: (row: number, col: number) => void;
   onCellHover: (row: number, col: number) => void;
   winningLine: Coordinate[] | null;
@@ -41,12 +42,13 @@ const CameraHandler: React.FC<{ trigger: number }> = ({ trigger }) => {
   );
 };
 
-export const Scene: React.FC<SceneProps> = ({ 
-  board, 
-  hoverPos, 
-  currentPlayer, 
+export const Scene: React.FC<SceneProps> = ({
+  board,
+  hoverPos,
+  currentPlayer,
   lastMove,
-  onCellClick, 
+  lastMoves,
+  onCellClick,
   onCellHover,
   winningLine,
   resetCameraTrigger
@@ -91,13 +93,14 @@ export const Scene: React.FC<SceneProps> = ({
             {/* Render Placed Stones */}
             {Array.from(board.entries()).map(([key, player]) => {
                 const [row, col] = key.split(',').map(Number);
-                const isLast = lastMove?.row === row && lastMove?.col === col;
+                // Check if this stone is in the lastMoves array (current turn)
+                const isInCurrentTurn = lastMoves.some(move => move.row === row && move.col === col);
                 return (
-                    <Stone 
-                        key={key} 
-                        position={getPosition(row, col)} 
-                        player={player} 
-                        isLastMove={isLast}
+                    <Stone
+                        key={key}
+                        position={getPosition(row, col)}
+                        player={player}
+                        isLastMove={isInCurrentTurn}
                     />
                 );
             })}
