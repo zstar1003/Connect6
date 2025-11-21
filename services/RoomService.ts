@@ -25,24 +25,28 @@ class RoomService {
   //   return `http://${host}:${port}`;
   // }
   private getServerUrl(): string {
-    // Use environment variable if provided
-    const workerUrl = import.meta.env.VITE_ROOM_API_URL as string | undefined;
-    if (workerUrl) {
-      console.log('[RoomService] Using VITE_ROOM_API_URL:', workerUrl);
-      return workerUrl;
+    // 1. Priority: Use environment variable if provided
+    const roomApiUrl = import.meta.env.VITE_ROOM_API_URL as string | undefined;
+    if (roomApiUrl) {
+      console.log('[RoomService] Using VITE_ROOM_API_URL:', roomApiUrl);
+      return roomApiUrl;
     }
 
     const host = window.location.hostname;
 
-    // In production (Cloudflare Pages), check for deployed worker
+    // 2. Production environment detection (Cloudflare Pages)
     if (host.includes('pages.dev') || host.includes('workers.dev')) {
-      // Use the hardcoded worker URL for Cloudflare deployment
-      const workerUrl = `https://connect6-room-api.zstar1003.workers.dev`;
-      console.log('[RoomService] Production mode, using Worker URL:', workerUrl);
-      return workerUrl;
+      // In production, VITE_ROOM_API_URL should be set
+      // This is a fallback in case environment variable is not set
+      console.warn('[RoomService] ⚠️ VITE_ROOM_API_URL not set in production!');
+      console.warn('[RoomService] Please set VITE_ROOM_API_URL environment variable to your Worker URL');
+      console.warn('[RoomService] Example: VITE_ROOM_API_URL=https://connect6-room-api.YOUR_SUBDOMAIN.workers.dev');
+
+      // Return a placeholder that will fail, forcing user to configure properly
+      return 'https://CONFIGURE_VITE_ROOM_API_URL_IN_ENV';
     }
 
-    // Local development - use HTTP with port
+    // 3. Local development - use HTTP with port
     const port = (import.meta.env.VITE_ROOM_SERVER_PORT as string) || '9001';
     const localUrl = `http://${host}:${port}`;
     console.log('[RoomService] Local mode, using:', localUrl);
