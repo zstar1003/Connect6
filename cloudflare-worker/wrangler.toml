@@ -1,0 +1,7 @@
+name = "connect6-room-api"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+[[kv_namespaces]]
+binding = "ROOMS"
+id = "9f7ad8d21ef14289b8ec9d0c0f6b2695"

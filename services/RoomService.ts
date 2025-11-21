@@ -18,13 +18,36 @@ class RoomService {
   /**
    * Get the room server URL dynamically from current location
    */
+  // private getServerUrl(): string {
+  //   // Use the current host (automatically handles localhost vs LAN IP)
+  //   const host = window.location.hostname;
+  //   const port = import.meta.env.VITE_ROOM_SERVER_PORT || '9001';
+  //   return `http://${host}:${port}`;
+  // }
   private getServerUrl(): string {
-    // Use the current host (automatically handles localhost vs LAN IP)
-    const host = window.location.hostname;
-    const port = import.meta.env.VITE_ROOM_SERVER_PORT || '9001';
-    return `http://${host}:${port}`;
-  }
+    // Use environment variable if provided
+    const workerUrl = import.meta.env.VITE_ROOM_API_URL as string | undefined;
+    if (workerUrl) {
+      console.log('[RoomService] Using VITE_ROOM_API_URL:', workerUrl);
+      return workerUrl;
+    }
 
+    const host = window.location.hostname;
+
+    // In production (Cloudflare Pages), check for deployed worker
+    if (host.includes('pages.dev') || host.includes('workers.dev')) {
+      // Use the hardcoded worker URL for Cloudflare deployment
+      const workerUrl = `https://connect6-room-api.zstar1003.workers.dev`;
+      console.log('[RoomService] Production mode, using Worker URL:', workerUrl);
+      return workerUrl;
+    }
+
+    // Local development - use HTTP with port
+    const port = (import.meta.env.VITE_ROOM_SERVER_PORT as string) || '9001';
+    const localUrl = `http://${host}:${port}`;
+    console.log('[RoomService] Local mode, using:', localUrl);
+    return localUrl;
+  }
   /**
    * Create a new room on the server
    */

@@ -23,9 +23,15 @@ export class PeerService {
     if (this.peer) this.peer.destroy();
 
     // Get PeerJS server configuration
-    // Use window.location.hostname to automatically handle localhost vs LAN IP
     const useLAN = import.meta.env.VITE_USE_LAN_SERVER === 'true';
-    const peerHost = useLAN ? window.location.hostname : undefined;
+
+    // Get peer host from env, or use window.location.hostname for local development
+    let peerHost = import.meta.env.VITE_PEER_HOST;
+    if (useLAN && !peerHost) {
+      // Fallback to current hostname for local development
+      peerHost = window.location.hostname;
+    }
+
     const peerPort = import.meta.env.VITE_PEER_PORT ? parseInt(import.meta.env.VITE_PEER_PORT) : 9000;
     const peerPath = import.meta.env.VITE_PEER_PATH || '/myapp';
 
@@ -53,8 +59,16 @@ export class PeerService {
       peerConfig.host = peerHost;
       peerConfig.port = peerPort;
       peerConfig.path = peerPath;
-      peerConfig.secure = false; // Use ws:// instead of wss:// for local network
 
+      // Use secure connection in production (HTTPS)
+      // For PeerJS cloud service, always use secure
+      if (peerHost && peerHost.includes('peerjs.com')) {
+        peerConfig.secure = true;
+        peerConfig.key = 'peerjs'; // Free tier key
+      } else {
+        // For custom servers, use secure if not localhost
+        peerConfig.secure = peerHost !== 'localhost' && peerHost !== '127.0.0.1';
+      }
       // Add multiple STUN servers and increase timeout for better connectivity
       peerConfig.config = {
         iceServers: [
@@ -72,7 +86,8 @@ export class PeerService {
       peerConfig.pingInterval = 5000;
 
       console.log(`[PeerService] Full config:`, peerConfig);
-      console.log(`[PeerService] Will connect to: ws://${peerHost}:${peerPort}${peerPath}`);
+      const protocol = peerConfig.secure ? 'wss://' : 'ws://';
+      console.log(`[PeerService] Will connect to: ${protocol}${peerHost}:${peerPort}${peerPath}`);
     } else {
       // Use default public PeerJS cloud server
       console.log('[PeerService] Using public PeerJS cloud server');
