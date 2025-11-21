@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
+      base: './', // Important for itch.io: use relative paths
       server: {
         host: '0.0.0.0', // Listen on all network interfaces
         port: 5173,
@@ -22,6 +23,15 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+        }
+      },
+      build: {
+        // Ensure assets use relative paths
+        assetsDir: 'assets',
+        rollupOptions: {
+          output: {
+            manualChunks: undefined,
+          }
         }
       }
     };

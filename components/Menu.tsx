@@ -4,6 +4,7 @@ import { GameMode, Player, GameStatus, AIDifficulty } from '../types';
 import { RoomInfo } from '../services/RoomService';
 import { WIN_COUNT } from '../constants';
 import { useLanguage } from '../i18n/LanguageContext';
+import { canUseOnlineMode } from '../utils/environment';
 
 interface MenuProps {
   status: GameStatus;
@@ -113,19 +114,6 @@ export const Menu: React.FC<MenuProps> = ({
       <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
         <div className="bg-stone-900 p-8 rounded-2xl border border-stone-700 shadow-2xl max-w-md w-full relative overflow-hidden">
 
-          {/* Language Selector - Top Right */}
-          <div className="absolute top-4 right-4 z-20">
-            <select
-              value={language}
-              onChange={(e) => setLanguage(e.target.value as 'en' | 'zh' | 'ja')}
-              className="bg-stone-800 text-stone-300 border border-stone-600 rounded px-2 py-1 text-sm cursor-pointer hover:bg-stone-700 transition"
-            >
-              <option value="en">{t.english}</option>
-              <option value="zh">{t.chinese}</option>
-              <option value="ja">{t.japanese}</option>
-            </select>
-          </div>
-
           {/* Header - Only show in main view */}
           {menuView === 'main' && (
             <>
@@ -156,18 +144,63 @@ export const Menu: React.FC<MenuProps> = ({
                 {t.localOneVsOne}
               </button>
 
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-stone-700"></span></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-stone-900 px-2 text-stone-500">{t.onlineMultiplayer}</span></div>
-              </div>
+              {/* Only show online multiplayer option if not on itch.io */}
+              {canUseOnlineMode() && (
+                <>
+                  <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-stone-700"></span></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-stone-900 px-2 text-stone-500">{t.onlineMultiplayer}</span></div>
+                  </div>
 
-              <button
-                onClick={() => setMenuView('lobby')}
-                className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-amber-100 font-semibold rounded-lg transition group flex items-center justify-center gap-2"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-amber-400 transition"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-                {t.onlineLobby}
-              </button>
+                  <button
+                    onClick={() => setMenuView('lobby')}
+                    className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-amber-100 font-semibold rounded-lg transition group flex items-center justify-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-amber-400 transition"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                    {t.onlineLobby}
+                  </button>
+                </>
+              )}
+
+              {/* Language Selector */}
+              <div className="pt-4 border-t border-stone-700">
+                <div className="text-xs text-stone-500 text-center mb-3">{t.language}</div>
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => setLanguage('en')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                      language === 'en'
+                        ? 'bg-amber-600 text-white shadow-lg'
+                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-300'
+                    }`}
+                  >
+                    <span className="text-lg">🇺🇸</span>
+                    <span className="text-sm font-medium">EN</span>
+                  </button>
+                  <button
+                    onClick={() => setLanguage('zh')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                      language === 'zh'
+                        ? 'bg-amber-600 text-white shadow-lg'
+                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-300'
+                    }`}
+                  >
+                    <span className="text-lg">🇨🇳</span>
+                    <span className="text-sm font-medium">中文</span>
+                  </button>
+                  <button
+                    onClick={() => setLanguage('ja')}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${
+                      language === 'ja'
+                        ? 'bg-amber-600 text-white shadow-lg'
+                        : 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-300'
+                    }`}
+                  >
+                    <span className="text-lg">🇯🇵</span>
+                    <span className="text-sm font-medium">日本語</span>
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 

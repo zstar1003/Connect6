@@ -8,6 +8,21 @@ This guide will walk you through deploying Connect-6 Master 3D to itch.io as a b
 - Node.js and npm installed
 - Your game source code
 
+## Important: Configuration for itch.io
+
+Before building, ensure your `vite.config.ts` has the correct settings for itch.io deployment:
+
+```typescript
+export default defineConfig(({ mode }) => {
+    return {
+      base: './', // CRITICAL: Use relative paths for itch.io
+      // ... rest of config
+    };
+});
+```
+
+This ensures all asset paths are relative, which is required for itch.io's iframe embedding.
+
 ## Step 1: Build the Game
 
 1. Open your terminal and navigate to the project directory:
