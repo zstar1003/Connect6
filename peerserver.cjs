@@ -8,6 +8,7 @@ const rooms = new Map();
 // Create PeerJS server
 const server = PeerServer({
   port: 9000,
+  host: '0.0.0.0', // Listen on all network interfaces
   path: '/myapp',
   allow_discovery: true,
   proxied: false,

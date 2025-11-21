@@ -25,15 +25,23 @@ export class PeerService {
     // Get PeerJS server configuration
     const useLAN = import.meta.env.VITE_USE_LAN_SERVER === 'true';
 
-    // Get peer host from env, or use window.location.hostname for local development
-    let peerHost = import.meta.env.VITE_PEER_HOST;
+    console.log('[PeerService] DEBUG - useLAN:', useLAN);
+    console.log('[PeerService] DEBUG - VITE_USE_LAN_SERVER:', import.meta.env.VITE_USE_LAN_SERVER);
+    console.log('[PeerService] DEBUG - VITE_PEER_HOST:', import.meta.env.VITE_PEER_HOST);
+    console.log('[PeerService] DEBUG - window.location.hostname:', window.location.hostname);
+
+    // Get peer host from env, or use localhost for local development
+    let peerHost = import.meta.env.VITE_PEER_HOST as string | undefined;
     if (useLAN && !peerHost) {
-      // Fallback to current hostname for local development
-      peerHost = window.location.hostname;
+      // For local development, default to localhost instead of window.location.hostname
+      // This ensures we connect via ws:// instead of wss://
+      const hostname = window.location.hostname;
+      peerHost = (hostname === '192.168.31.21' || hostname.startsWith('192.168.')) ? 'localhost' : hostname;
+      console.log('[PeerService] No VITE_PEER_HOST set, using:', peerHost);
     }
 
-    const peerPort = import.meta.env.VITE_PEER_PORT ? parseInt(import.meta.env.VITE_PEER_PORT) : 9000;
-    const peerPath = import.meta.env.VITE_PEER_PATH || '/myapp';
+    const peerPort = import.meta.env.VITE_PEER_PORT ? parseInt(import.meta.env.VITE_PEER_PORT as string) : 9000;
+    const peerPath = (import.meta.env.VITE_PEER_PATH as string) || '/myapp';
 
     console.log('[PeerService] Config:', { useLAN, peerHost, peerPort, peerPath });
 

@@ -240,16 +240,33 @@ const App: React.FC = () => {
     if (status !== GameStatus.Playing) return;
     if (!isValidMove(board, row, col)) return;
     if (gameMode === GameMode.AI && isAITurn) return;
+
+    // Online game: check if it's this player's turn
     if (gameMode !== GameMode.Local && gameMode !== GameMode.AI) {
+      // Simply check if current player matches local player role
+      // The turn state synchronization is handled by executeMove and network messages
       if (currentPlayer !== localPlayerRole) return;
     }
 
     executeMove(row, col, currentPlayer);
 
     if ((gameMode === GameMode.OnlineHost || gameMode === GameMode.OnlineJoin) && peerService.current) {
+      // Calculate what the state will be after this move
+      const stonesPerTurn = isFirstMove ? 1 : 2;
+      const newStonesPlaced = stonesPlacedThisTurn + 1;
+      const turnComplete = newStonesPlaced >= stonesPerTurn;
+
       peerService.current.send({
         type: 'move',
-        payload: { row, col, player: currentPlayer }
+        payload: {
+          row,
+          col,
+          player: currentPlayer,
+          stonesPlacedThisTurn: newStonesPlaced,
+          isFirstMove: isFirstMove,
+          turnComplete: turnComplete, // Tell opponent if turn is complete
+          nextPlayer: turnComplete ? (currentPlayer === Player.Black ? Player.White : Player.Black) : currentPlayer
+        }
       });
     }
   };
@@ -304,7 +321,29 @@ const App: React.FC = () => {
              }, 100);
           }
           else if (data.type === 'move') {
-            executeMove(data.payload.row, data.payload.col, data.payload.player);
+            // Receive move from client with explicit state synchronization
+            const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer } = data.payload;
+
+            console.log('[Host] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer });
+
+            // Execute the move on our board
+            executeMove(row, col, player);
+
+            // Force synchronize state with opponent's authoritative state
+            // This ensures both players have exactly the same game state
+            // Use setTimeout to ensure executeMove's state updates have completed
+            setTimeout(() => {
+              if (turnComplete) {
+                setCurrentPlayer(nextPlayer);
+                setStonesPlacedThisTurn(0);
+                setIsFirstMove(false);
+              } else {
+                setCurrentPlayer(player); // Keep same player
+                setStonesPlacedThisTurn(opponentStonesPlaced);
+                setIsFirstMove(opponentIsFirstMove);
+              }
+              console.log('[Host] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete });
+            }, 0);
           }
           else if (data.type === 'win') {
             // Receive win notification from client
@@ -387,8 +426,29 @@ const App: React.FC = () => {
                  setLocalPlayerRole(Player.White);
                  resetGame();
              } else if (data.type === 'move') {
-                 console.log('[Client] Received move:', data.payload);
-                 executeMove(data.payload.row, data.payload.col, data.payload.player);
+                 // Receive move from host with explicit state synchronization
+                 const { row, col, player, stonesPlacedThisTurn: opponentStonesPlaced, isFirstMove: opponentIsFirstMove, turnComplete, nextPlayer } = data.payload;
+
+                 console.log('[Client] Syncing state:', { opponentStonesPlaced, opponentIsFirstMove, turnComplete, nextPlayer });
+
+                 // Execute the move on our board
+                 executeMove(row, col, player);
+
+                 // Force synchronize state with opponent's authoritative state
+                 // This ensures both players have exactly the same game state
+                 // Use setTimeout to ensure executeMove's state updates have completed
+                 setTimeout(() => {
+                   if (turnComplete) {
+                     setCurrentPlayer(nextPlayer);
+                     setStonesPlacedThisTurn(0);
+                     setIsFirstMove(false);
+                   } else {
+                     setCurrentPlayer(player); // Keep same player
+                     setStonesPlacedThisTurn(opponentStonesPlaced);
+                     setIsFirstMove(opponentIsFirstMove);
+                   }
+                   console.log('[Client] State synchronized:', { nextPlayer, opponentStonesPlaced, turnComplete });
+                 }, 0);
              } else if (data.type === 'win') {
                  // Receive win notification from host
                  console.log('[Client] Received win:', data.payload);
