@@ -22,10 +22,10 @@ export class PeerService {
   init(id?: string) {
     if (this.peer) this.peer.destroy();
 
-    // Get PeerJS server configuration from environment variables
-    // Default to localhost for LAN play, fallback to public cloud server
+    // Get PeerJS server configuration
+    // Use window.location.hostname to automatically handle localhost vs LAN IP
     const useLAN = import.meta.env.VITE_USE_LAN_SERVER === 'true';
-    const peerHost = import.meta.env.VITE_PEER_HOST || 'localhost';
+    const peerHost = useLAN ? window.location.hostname : undefined;
     const peerPort = import.meta.env.VITE_PEER_PORT ? parseInt(import.meta.env.VITE_PEER_PORT) : 9000;
     const peerPath = import.meta.env.VITE_PEER_PATH || '/myapp';
 
@@ -231,13 +231,13 @@ export class PeerService {
       return new Promise((resolve) => {
           // Get PeerJS server configuration
           const useLAN = import.meta.env.VITE_USE_LAN_SERVER === 'true';
-          const peerHost = import.meta.env.VITE_PEER_HOST || 'localhost';
+          const peerHost = useLAN ? window.location.hostname : undefined;
           const peerPort = import.meta.env.VITE_PEER_PORT ? parseInt(import.meta.env.VITE_PEER_PORT) : 9000;
           const peerPath = import.meta.env.VITE_PEER_PATH || '/myapp';
 
           const peerConfig: any = { debug: 0 };
 
-          if (useLAN) {
+          if (useLAN && peerHost) {
               peerConfig.host = peerHost;
               peerConfig.port = peerPort;
               peerConfig.path = peerPath;

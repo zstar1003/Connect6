@@ -17,6 +17,7 @@ export default defineConfig(({ mode }) => {
         'import.meta.env.VITE_PEER_HOST': JSON.stringify(env.VITE_PEER_HOST),
         'import.meta.env.VITE_PEER_PORT': JSON.stringify(env.VITE_PEER_PORT),
         'import.meta.env.VITE_PEER_PATH': JSON.stringify(env.VITE_PEER_PATH),
+        'import.meta.env.VITE_ROOM_SERVER_PORT': JSON.stringify(env.VITE_ROOM_SERVER_PORT),
       },
       resolve: {
         alias: {

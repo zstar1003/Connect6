@@ -16,10 +16,11 @@ class RoomService {
   private currentRoomId: string | null = null;
 
   /**
-   * Get the room server URL from environment or default
+   * Get the room server URL dynamically from current location
    */
   private getServerUrl(): string {
-    const host = import.meta.env.VITE_PEER_HOST || 'localhost';
+    // Use the current host (automatically handles localhost vs LAN IP)
+    const host = window.location.hostname;
     const port = import.meta.env.VITE_ROOM_SERVER_PORT || '9001';
     return `http://${host}:${port}`;
   }
