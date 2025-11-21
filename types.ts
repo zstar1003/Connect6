@@ -15,6 +15,7 @@ export enum GameMode {
 
 export enum GameStatus {
   Menu = 'menu',
+  WaitingRoom = 'waiting_room', // Host is waiting for players
   Playing = 'playing',
   Ended = 'ended',
   EndedDialogClosed = 'ended_dialog_closed', // Game ended but dialog was closed

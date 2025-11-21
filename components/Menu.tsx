@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { GameMode, Player, GameStatus, AIDifficulty } from '../types';
+import { RoomInfo } from '../services/RoomService';
 import { WIN_COUNT } from '../constants';
 
 interface MenuProps {
@@ -14,6 +15,7 @@ interface MenuProps {
   isFirstMove: boolean; // For Connect-6 rule
   restartRequested: boolean; // Opponent requested restart
   waitingForOpponent: boolean; // Waiting for opponent to confirm restart
+  availableRooms: RoomInfo[]; // Available rooms list
   onStartLocal: () => void;
   onStartAI: (difficulty: AIDifficulty) => void;
   onHost: () => void;
@@ -34,6 +36,7 @@ export const Menu: React.FC<MenuProps> = ({
   isFirstMove,
   restartRequested,
   waitingForOpponent,
+  availableRooms,
   onStartLocal,
   onStartAI,
   onHost,
@@ -51,6 +54,57 @@ export const Menu: React.FC<MenuProps> = ({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Waiting Room - Host is waiting for players to join
+  if (status === GameStatus.WaitingRoom) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
+        <div className="bg-stone-900 p-8 rounded-2xl border border-stone-700 shadow-2xl max-w-md w-full relative overflow-hidden">
+          <h2 className="text-2xl font-bold text-amber-200 mb-2 text-center">Waiting for Player</h2>
+          <p className="text-stone-400 text-center mb-6 text-sm">
+            Share your Room ID with a friend to start playing
+          </p>
+
+          {/* Room ID Display */}
+          <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 mb-6">
+            <div className="text-xs text-stone-500 font-semibold uppercase mb-3">Your Room ID</div>
+            <div className="flex items-center gap-2 bg-black/50 p-3 rounded-lg border border-stone-800">
+              <code className="flex-1 text-amber-300 font-mono text-lg select-all break-all text-center">
+                {myId}
+              </code>
+            </div>
+            <button
+              onClick={copyId}
+              className="w-full mt-3 py-2 px-4 bg-stone-800 hover:bg-stone-700 rounded-lg text-sm font-bold text-stone-300 border border-stone-700 transition"
+            >
+              {copied ? '✓ Copied to Clipboard' : 'Copy Room ID'}
+            </button>
+          </div>
+
+          {/* Waiting Animation */}
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="flex items-center gap-3">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-400"></div>
+              <span className="text-stone-300">Waiting for opponent to join...</span>
+            </div>
+            <div className="flex gap-1">
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+
+          {/* Cancel Button */}
+          <button
+            onClick={onLeave}
+            className="w-full py-3 px-4 bg-stone-800 hover:bg-stone-700 border border-stone-600 text-stone-300 font-semibold rounded-lg transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (status === GameStatus.Menu) {
     return (
@@ -159,11 +213,11 @@ export const Menu: React.FC<MenuProps> = ({
                  </div>
                </div>
 
-               {/* Join Section */}
+               {/* Join Section - Room List */}
                <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 shadow-lg">
                   <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                    Join a Room
+                    Available Rooms
                   </div>
 
                   {gameMode === GameMode.OnlineJoin && myId ? (
@@ -178,26 +232,42 @@ export const Menu: React.FC<MenuProps> = ({
                     </>
                   ) : (
                     <>
-                      <div className="text-stone-400 text-sm mb-3">
-                        Enter the host's Room ID to join their game:
-                      </div>
-
-                      <div className="flex gap-2">
-                        <input
-                          placeholder="Paste Room ID here..."
-                          className="flex-1 bg-black/50 border border-stone-700 rounded-lg px-4 py-2.5 text-sm text-stone-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
-                          value={joinId}
-                          onChange={(e) => setJoinId(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && joinId && onJoin(joinId)}
-                        />
-                        <button
-                          onClick={() => onJoin(joinId)}
-                          disabled={!joinId}
-                          className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-500 hover:to-green-600 disabled:from-stone-800 disabled:to-stone-800 rounded-lg text-sm font-bold text-white disabled:text-stone-600 border border-green-800 disabled:border-stone-700 transition disabled:cursor-not-allowed"
-                        >
-                          Join
-                        </button>
-                      </div>
+                      {availableRooms.length === 0 ? (
+                        <div className="text-center py-8">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-3 text-stone-600">
+                            <rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                          </svg>
+                          <p className="text-stone-500 text-sm">No rooms available</p>
+                          <p className="text-stone-600 text-xs mt-1">Create a room to start playing!</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-60 overflow-y-auto">
+                          {availableRooms.map((room) => (
+                            <button
+                              key={room.id}
+                              onClick={() => onJoin(room.id)}
+                              className="w-full bg-black/30 hover:bg-black/50 border border-stone-700 hover:border-amber-500/50 rounded-lg p-4 transition text-left group"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                    <span className="text-white font-semibold group-hover:text-amber-200 transition">
+                                      {room.hostName}'s Room
+                                    </span>
+                                  </div>
+                                  <div className="text-xs text-stone-400">
+                                    Players: {room.playerCount}/{room.maxPlayers}
+                                  </div>
+                                </div>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-stone-600 group-hover:text-amber-400 transition">
+                                  <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                                </svg>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                </div>

@@ -14,6 +14,7 @@ import { getKey, isValidMove, checkWin } from './utils/gameLogic';
 import { getBestMove } from './utils/ai';
 import { PeerService } from './services/PeerService';
 import { soundManager } from './utils/soundManager';
+import { roomService, RoomInfo } from './services/RoomService';
 
 const App: React.FC = () => {
   // Game State
@@ -37,6 +38,7 @@ const App: React.FC = () => {
   const peerService = useRef<PeerService | null>(null);
   const [restartRequested, setRestartRequested] = useState(false); // Track if opponent requested restart
   const [waitingForOpponent, setWaitingForOpponent] = useState(false); // Track if we're waiting for opponent's restart confirmation
+  const [availableRooms, setAvailableRooms] = useState<RoomInfo[]>([]); // Available rooms list
 
   // Lock for AI turn
   const [isAITurn, setIsAITurn] = useState(false);
@@ -47,6 +49,31 @@ const App: React.FC = () => {
   useEffect(() => {
     boardRef.current = board;
   }, [board]);
+
+  // Refresh room list periodically when in menu
+  useEffect(() => {
+    if (status === GameStatus.Menu) {
+      const refreshRooms = async () => {
+        const rooms = await roomService.getAllRooms();
+        setAvailableRooms(rooms);
+      };
+
+      // Refresh immediately
+      refreshRooms();
+
+      // Refresh every 2 seconds
+      const interval = setInterval(refreshRooms, 2000);
+
+      return () => clearInterval(interval);
+    }
+  }, [status]);
+
+  // Cleanup room service on unmount
+  useEffect(() => {
+    return () => {
+      roomService.cleanup();
+    };
+  }, []);
 
   // --- Game Logic ---
 
@@ -226,9 +253,16 @@ const App: React.FC = () => {
       if (peerService.current) peerService.current.destroy();
 
       peerService.current = new PeerService({
-        onOpen: (id) => {
+        onOpen: async (id) => {
           setMyId(id);
           setLocalPlayerRole(Player.Black);
+
+          // Register room in room service
+          await roomService.createRoom(id, 'Host');
+          console.log('[Host] Room registered:', id);
+
+          // Enter waiting room
+          setStatus(GameStatus.WaitingRoom);
         },
         onData: (data: any) => {
           console.log('[Host] Received data:', data);
@@ -403,6 +437,12 @@ const App: React.FC = () => {
 
   const handleLeave = () => {
       if (peerService.current) peerService.current.destroy();
+
+      // Clean up room if hosting
+      if (gameMode === GameMode.OnlineHost && myId) {
+        roomService.removeRoom(myId);
+      }
+
       setStatus(GameStatus.Menu);
       setGameMode(GameMode.Local);
       setBoard(new Map());
@@ -433,6 +473,7 @@ const App: React.FC = () => {
         isFirstMove={isFirstMove}
         restartRequested={restartRequested}
         waitingForOpponent={waitingForOpponent}
+        availableRooms={availableRooms}
         onStartLocal={startLocalGame}
         onStartAI={startAIGame}
         onHost={handleHost}
