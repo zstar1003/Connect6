@@ -34,13 +34,13 @@ class RoomService {
 
     const host = window.location.hostname;
 
-    // 2. Production environment detection (Cloudflare Pages)
-    if (host.includes('pages.dev') || host.includes('workers.dev')) {
+    // 2. Production environment detection
+    if (host !== 'localhost' && host !== '127.0.0.1' && !host.startsWith('192.168.')) {
       // In production, VITE_ROOM_API_URL should be set
       // This is a fallback in case environment variable is not set
       console.warn('[RoomService] ⚠️ VITE_ROOM_API_URL not set in production!');
-      console.warn('[RoomService] Please set VITE_ROOM_API_URL environment variable to your Worker URL');
-      console.warn('[RoomService] Example: VITE_ROOM_API_URL=https://connect6-room-api.YOUR_SUBDOMAIN.workers.dev');
+      console.warn('[RoomService] Please set VITE_ROOM_API_URL environment variable to your server API URL');
+      console.warn('[RoomService] Example: VITE_ROOM_API_URL=https://your-server.com/api');
 
       // Return a placeholder that will fail, forcing user to configure properly
       return 'https://CONFIGURE_VITE_ROOM_API_URL_IN_ENV';
