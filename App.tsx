@@ -67,6 +67,17 @@ const App: React.FC = () => {
     };
   }, []);
 
+  // Auto-join room from URL parameter
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get('room');
+
+    if (roomId && status === GameStatus.Menu) {
+      console.log('[App] Auto-joining room from URL:', roomId);
+      handleJoin(roomId);
+    }
+  }, []);
+
   // --- Game Logic ---
 
   const resetGame = () => {
@@ -286,7 +297,7 @@ const App: React.FC = () => {
 
   // --- Network & Lobby Handlers ---
 
-  const handleHost = () => {
+  const handleHost = (roomName?: string) => {
       setGameMode(GameMode.OnlineHost);
 
       if (peerService.current) peerService.current.destroy();
@@ -296,9 +307,10 @@ const App: React.FC = () => {
           setMyId(id);
           setLocalPlayerRole(Player.Black);
 
-          // Register room in room service
-          await roomService.createRoom(id, 'Host');
-          console.log('[Host] Room registered:', id);
+          // Register room in room service with custom name
+          const displayName = roomName || 'Host';
+          await roomService.createRoom(id, displayName);
+          console.log('[Host] Room registered:', id, 'Name:', displayName);
 
           // Enter waiting room
           setStatus(GameStatus.WaitingRoom);

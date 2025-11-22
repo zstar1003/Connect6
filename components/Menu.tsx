@@ -20,7 +20,7 @@ interface MenuProps {
   availableRooms: RoomInfo[]; // Available rooms list
   onStartLocal: () => void;
   onStartAI: (difficulty: AIDifficulty) => void;
-  onHost: () => void;
+  onHost: (roomName?: string) => void;
   onJoin: (id: string) => void;
   onRestart: () => void;
   onCloseWinDialog: () => void;
@@ -51,7 +51,8 @@ export const Menu: React.FC<MenuProps> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
-  const [joinId, setJoinId] = useState('');
+  const [roomName, setRoomName] = useState('');
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Refresh room list when entering lobby view
   useEffect(() => {
@@ -59,6 +60,14 @@ export const Menu: React.FC<MenuProps> = ({
       onRefreshRooms();
     }
   }, [menuView]);
+
+  // Copy room link to clipboard
+  const copyRoomLink = () => {
+    const roomLink = `${window.location.origin}${window.location.pathname}?room=${myId}`;
+    navigator.clipboard.writeText(roomLink);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
+  };
 
   // Waiting Room - Host is waiting for players to join
   if (status === GameStatus.WaitingRoom) {
@@ -69,6 +78,26 @@ export const Menu: React.FC<MenuProps> = ({
           <p className="text-stone-400 text-center mb-6 text-sm">
             {t.shareRoomId}
           </p>
+
+          {/* Room Link - Copy to share */}
+          <div className="mb-6 bg-black/30 border border-stone-700 rounded-lg p-4">
+            <div className="text-xs text-stone-500 uppercase mb-2 font-semibold">Share this link with your friend</div>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.origin}${window.location.pathname}?room=${myId}`}
+                className="flex-1 bg-stone-950 text-stone-300 text-sm px-3 py-2 rounded border border-stone-700 font-mono"
+                onClick={(e) => e.currentTarget.select()}
+              />
+              <button
+                onClick={copyRoomLink}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded transition font-medium text-sm"
+              >
+                {linkCopied ? '✓' : 'Copy'}
+              </button>
+            </div>
+          </div>
 
           {/* Waiting Animation */}
           <div className="flex flex-col items-center gap-4 mb-6">
@@ -214,12 +243,22 @@ export const Menu: React.FC<MenuProps> = ({
                       </div>
                     </>
                   ) : (
-                    <button
-                      onClick={onHost}
-                      className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
-                    >
-                      {t.createRoom}
-                    </button>
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Room name (optional)"
+                        value={roomName}
+                        onChange={(e) => setRoomName(e.target.value)}
+                        className="w-full mb-3 px-4 py-2 bg-stone-950 border border-stone-700 rounded-lg text-stone-300 placeholder-stone-600 focus:border-amber-500 focus:outline-none transition"
+                        maxLength={20}
+                      />
+                      <button
+                        onClick={() => onHost(roomName.trim() || undefined)}
+                        className="w-full py-3 px-4 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold rounded-lg transition shadow-lg transform hover:scale-[1.02]"
+                      >
+                        {t.createRoom}
+                      </button>
+                    </>
                   )}
                </div>
 
