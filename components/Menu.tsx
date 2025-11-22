@@ -25,6 +25,7 @@ interface MenuProps {
   onRestart: () => void;
   onCloseWinDialog: () => void;
   onLeave: () => void;
+  onRefreshRooms: () => void;
 }
 
 export const Menu: React.FC<MenuProps> = ({
@@ -46,10 +47,18 @@ export const Menu: React.FC<MenuProps> = ({
   onRestart,
   onCloseWinDialog,
   onLeave,
+  onRefreshRooms,
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const [menuView, setMenuView] = useState<'main' | 'lobby' | 'difficulty'>('main');
   const [joinId, setJoinId] = useState('');
+
+  // Refresh room list when entering lobby view
+  useEffect(() => {
+    if (menuView === 'lobby') {
+      onRefreshRooms();
+    }
+  }, [menuView]);
 
   // Waiting Room - Host is waiting for players to join
   if (status === GameStatus.WaitingRoom) {
@@ -226,9 +235,23 @@ export const Menu: React.FC<MenuProps> = ({
 
                {/* Join Section - Room List */}
                <div className="bg-gradient-to-br from-stone-950 to-stone-900 border border-stone-700 rounded-xl p-5 shadow-lg">
-                  <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
-                    {t.availableRooms}
+                  <div className="text-xs text-stone-500 font-semibold uppercase mb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                      {t.availableRooms}
+                    </div>
+                    <button
+                      onClick={onRefreshRooms}
+                      className="p-1.5 rounded-md hover:bg-stone-800 transition text-stone-400 hover:text-amber-400"
+                      title="Refresh room list"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                        <path d="M21 3v5h-5"/>
+                        <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                        <path d="M3 21v-5h5"/>
+                      </svg>
+                    </button>
                   </div>
 
                   {gameMode === GameMode.OnlineJoin && myId ? (

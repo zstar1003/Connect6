@@ -54,23 +54,11 @@ const App: React.FC = () => {
     boardRef.current = board;
   }, [board]);
 
-  // Refresh room list periodically when in menu
-  useEffect(() => {
-    if (status === GameStatus.Menu) {
-      const refreshRooms = async () => {
-        const rooms = await roomService.getAllRooms();
-        setAvailableRooms(rooms);
-      };
-
-      // Refresh immediately
-      refreshRooms();
-
-      // Refresh every 2 seconds
-      const interval = setInterval(refreshRooms, 2000);
-
-      return () => clearInterval(interval);
-    }
-  }, [status]);
+  // Refresh room list manually (no auto-polling)
+  const refreshRoomList = async () => {
+    const rooms = await roomService.getAllRooms();
+    setAvailableRooms(rooms);
+  };
 
   // Cleanup room service on unmount
   useEffect(() => {
@@ -586,6 +574,7 @@ const App: React.FC = () => {
         onRestart={handleRestart}
         onCloseWinDialog={handleCloseWinDialog}
         onLeave={handleLeave}
+        onRefreshRooms={refreshRoomList}
       />
 
       {/* Reset View Button */}
