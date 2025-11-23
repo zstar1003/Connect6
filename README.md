@@ -1,238 +1,188 @@
-# Connect-6 Master 3D
+# Connect-6
 
-一个基于 Three.js 和 React 的 3D 六子棋游戏，支持本地双人、人机对战和在线联机对战。
+A 3D Connect-6 game that supports local two-player, player-versus-AI, and online multiplayer modes.
 
-[English](#english-version) | 中文
+[中文](README_ZH.md)
 
-## 关于六子棋
+[![I made a 3D Six-in-a-Row](https://i0.hdslb.com/bfs/archive/ff685f17a99075e7c9d821dd2fa53d6fc524dca1.jpg@672w_378h_1c.avif)](https://www.bilibili.com/video/BV17vUKBeEKx)
 
-六子棋是一种公平的策略棋类游戏：
+Demo Links:
 
-- 黑方先手下 **1 颗**棋子
-- 之后每回合双方各下 **2 颗**棋子
-- 先连成 **6 颗**同色棋子者获胜（横、竖、斜均可）
+- Single Player: https://zstar1003.itch.io/connect-6-master-3d
 
-## 功能特性
+- Single Player + Multiplayer: https://connect6.pages.dev
 
-- ✅ **3D 棋盘** - 使用 Three.js 渲染的精美 3D 界面
-- ✅ **多种游戏模式**:
-  - 本地双人对战（同设备轮流）
-  - 人机对战（简单/中等/困难）
-  - 在线联机对战（支持局域网和互联网）
-- ✅ **房间系统** - 创建和加入房间，支持自定义房间名称
-- ✅ **快捷分享** - 生成房间链接，好友点击即可加入
-- ✅ **音效** - 落子音效和胜利音效
-- ✅ **流畅动画** - 落子动画和胜利连线高亮
-- ✅ **多语言** - 支持中文、英文、日文
+## About Six-in-a-Row
 
-## 技术栈
+Six-in-a-Row is a fair strategy board game:
+
+- Black moves first, placing **1** piece.
+
+- Each subsequent turn, both players place **2** pieces.
+
+- The first player to connect **6** pieces of the same color wins (horizontally, vertically, or diagonally).
+
+## Features
+
+- ✅ **3D Chessboard** - Beautiful 3D interface rendered using Three.js
+
+- ✅ **Multiple Game Modes**:
+
+- Local Two-Player Battle (Same Device, Alternate Turns)
+
+- Player vs. AI Battle (Easy/Medium/Hard)
+
+- Online Multiplayer Battle (Supports LAN and Internet)
+
+- ✅ **Room System** - Create and join rooms, supports custom room names
+
+- ✅ **Quick Sharing** - Generate room links, friends can join with a click
+
+- ✅ **Sound Effects** - Placement sound effects and victory sound effects
+
+- ✅ **Smooth Animations** - Placement animations and victory line highlighting
+
+- ✅ **Multi-Language** - Supports Chinese, English, and Japanese
+
+## Technology Stack
 
 - React 18 + TypeScript
+
 - Three.js / React Three Fiber
+
 - PeerJS (WebRTC)
+
 - Vite
+
 - Tailwind CSS
+
 - Node.js + Express
 
-## 快速开始
+## Quick Start
 
-### 环境要求
+### Environment Requirements
 
-- Node.js 16+ 和 npm
+- Node.js 16+ and npm
 
-### 安装依赖
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 本地运行
+### Local Operation
 
-#### 方式一：仅前端（本地双人/人机对战）
+#### Method 1: Frontend Only (Local Two-Player/Man vs. AI)
 
 ```bash
 npm run dev
 ```
+Access `http://localhost:5173`
 
-访问 `http://localhost:5173`
+#### Method 2: Full Functionality (Including Online Multiplayer)
 
-#### 方式二：完整功能（包含在线联机）
-
-需要同时启动三个服务：
+Requires three services to be running simultaneously:
 
 ```bash
-# 终端 1: 启动前端
+
+# Terminal 1: Start the frontend
 npm run dev
 
-# 终端 2: 启动 PeerJS 信令服务器
+# Terminal 2: Start the PeerJS signaling server
 npm run peer
 
-# 终端 3: 启动房间 API 服务器
+# Terminal 3: Start the room API server
 npm run room
 ```
 
-然后访问 `http://localhost:5173`
+Then access `http://localhost:5173`
 
-### 局域网联机
+### LAN Multiplayer
 
-如果想在同一 WiFi 下的不同设备间联机：
+To play between different devices on the same Wi-Fi network:
 
-1. 找到你的本地 IP 地址：
-   - macOS/Linux: `ifconfig | grep "inet "`
-   - Windows: `ipconfig`
-   - 例如: `192.168.1.100`
+1. Find your local IP address:
 
-2. 创建 `.env.local` 文件：
-   ```env
-   VITE_PEER_HOST=192.168.1.100
-   ```
+- macOS/Linux: `ifconfig | grep "inet "`
 
-3. 重启服务器，在其他设备上访问：
-   ```
-   http://192.168.1.100:5173
-   ```
+- Windows: `ipconfig`
 
-## 生产环境部署
+- For example: `192.168.1.100`
 
-详细部署文档请查看: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+2. Create a `.env.local` file:
 
-推荐部署方案：
-- **前端**: Cloudflare Pages（或其他静态托管）
-- **后端**: 阿里云 ECS 服务器
+``env
 
-### 构建生产版本
+VITE_PEER_HOST=192.168.1.100
+
+```
+
+3. Restart the server and access it from other devices:
+
+```
+
+http://192.168.1.100:5173
+
+```
+
+## Production Environment Deployment
+
+For detailed deployment documentation, please see: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+Recommended Deployment Solution:
+
+- **Frontend**: Cloudflare Pages (or other static hosting)
+
+- **Backend**: Alibaba Cloud ECS Server
+
+### Building the Production Version
 
 ```bash
 npm run build
-```
-
-生产文件将输出到 `dist` 目录。
-
-## 游戏玩法
-
-### 本地模式 / 人机对战
-
-1. 点击"本地双人"或"人机对战"
-2. 人机对战需选择难度
-3. 点击棋盘下棋
-
-### 在线联机
-
-#### 创建房间：
-1. 点击"在线大厅"
-2. 输入房间名称（可选）
-3. 点击"创建房间"
-4. 复制房间链接分享给好友
-5. 等待对手加入
-
-#### 加入房间：
-1. 点击"在线大厅"
-2. 从列表中选择房间
-3. 或直接访问好友分享的链接
-4. 自动开始游戏
-
-## 操作控制
-
-- 鼠标左键: 下棋
-- 鼠标右键拖动: 旋转视角
-- 滚轮: 缩放
-- "重置视角"按钮: 恢复默认视角
-
-## 项目结构
 
 ```
-SixRowGame/
-├── components/          # React 组件
-│   ├── Board.tsx       # 棋盘
-│   ├── Stone.tsx       # 棋子
-│   ├── Scene.tsx       # 3D 场景
-│   └── Menu.tsx        # 菜单
-├── services/           # 服务层
-│   ├── PeerService.ts  # WebRTC 连接
-│   └── RoomService.ts  # 房间管理
-├── utils/              # 工具函数
-│   ├── gameLogic.ts    # 游戏逻辑
-│   ├── ai.ts           # AI 算法
-│   └── soundManager.ts # 音效
-├── i18n/               # 国际化
-├── peerserver.cjs      # PeerJS 服务器
-├── roomserver.cjs      # 房间 API 服务器
-└── docs/               # 文档
-```
+The production files will be output to the `dist` directory.
 
-## 常见问题
+## Gameplay
 
-### 无法连接在线对战？
+### Local Mode / Player vs. AI
 
-检查：
-- PeerJS 服务器运行状态
-- 房间 API 服务器运行状态
-- 防火墙设置（9000、9001 端口）
-- 环境变量配置
+1. Click "Local Two" or "Player vs. AI"
 
-### 局域网无法连接？
+2. Select difficulty for Player vs. AI.
 
-确保：
-- 所有设备在同一 WiFi
-- `.env.local` 中 IP 地址正确
-- 主机防火墙允许访问
+3. Click the board to play.
 
-## 贡献
+### Online Multiplayer
 
-欢迎提交 Issue 和 Pull Request！
+#### Creating a Room:
 
-## 许可证
+1. Click "Online Lobby"
 
-MIT License
+2. Enter a room name (optional)
 
----
+3. Click "Create Room"
 
-## English Version
+4. Copy the room link and share it with friends.
 
-A 3D Connect-6 game built with Three.js and React, supporting local multiplayer, AI opponents, and online multiplayer.
+5. Wait for your opponent to join.
 
-### About Connect-6
+#### Joining a Room:
 
-Connect-6 is a fair strategy board game:
-- Black places **1 stone** on the first turn
-- After that, each player places **2 stones** per turn
-- First to connect **6 stones** wins (horizontal, vertical, or diagonal)
+1. Click "Online Lobby"
 
-### Features
+2. Select a room from the list.
 
-- ✅ **3D Board** - Beautiful rendering with Three.js
-- ✅ **Multiple Game Modes**: Local 1v1, AI (Easy/Medium/Hard), Online Multiplayer
-- ✅ **Room System** - Create and join rooms with custom names
-- ✅ **Quick Share** - Generate room links for easy joining
-- ✅ **Sound Effects** - Stone placement and victory sounds
-- ✅ **Smooth Animations** - Stone placement and winning line highlights
-- ✅ **Multi-language** - Chinese, English, Japanese
+3. Or directly access a link shared by a friend.
 
-### Quick Start
+4. Game starts automatically.
 
-```bash
-# Install dependencies
-npm install
+## Controls
 
-# Run all services
-npm run dev  # Terminal 1: Frontend
-npm run peer # Terminal 2: PeerJS server
-npm run room # Terminal 3: Room API server
-```
+- Left Mouse Button: Move a piece
 
-Visit `http://localhost:5173`
+- Right Mouse Button Drag: Rotate the view
 
-### Deployment
+- Scroll Wheel: Zoom
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment guide.
-
-### Controls
-
-- Left click: Place stone
-- Right drag: Rotate camera
-- Mouse wheel: Zoom
-- Reset View button: Reset camera
-
-### License
-
-MIT License
+- "Reset View" Button: Restore default view
